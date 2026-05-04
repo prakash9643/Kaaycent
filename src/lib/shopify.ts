@@ -1,0 +1,92 @@
+
+const SHOPIFY_STORE_DOMAIN = import.meta.env.VITE_SHOPIFY_STORE_DOMAIN;
+const SHOPIFY_STOREFRONT_ACCESS_TOKEN = import.meta.env.VITE_SHOPIFY_STOREFRONT_ACCESS_TOKEN;
+
+async function shopifyFetch(query: string, variables = {}) {
+  const domain = SHOPIFY_STORE_DOMAIN?.trim();
+  const token = SHOPIFY_STOREFRONT_ACCESS_TOKEN?.trim();
+
+  if (!domain || !token || domain === '' || token === '') {
+    throw new Error('Shopify Configuration Missing: Please set VITE_SHOPIFY_STORE_DOMAIN and VITE_SHOPIFY_STOREFRONT_ACCESS_TOKEN in your environment settings.');
+  }
+
+  const response = await fetch(`https://${domain}/api/2024-01/graphql.json`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Shopify-Storefront-Access-Token': token,
+    },
+    body: JSON.stringify({ query, variables }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('Shopify API Error Details:', errorText);
+    
+    if (response.status === 401) {
+      throw new Error(`Shopify Unauthorized (401): Your Storefront Access Token is invalid or missing permissions. Please verify VITE_SHOPIFY_STOREFRONT_ACCESS_TOKEN and your Headless app scopes in Shopify Admin.`);
+    }
+    
+    throw new Error(`Shopify API request failed with status ${response.status}: ${response.statusText}`);
+  }
+
+  const data = await response.json();
+  if (data.errors) {
+    throw new Error(data.errors[0].message);
+  }
+  return data.data;
+}
+
+export const createShopifyCheckout = async (
+  lineItems: { variantId: string, quantity: number }[], 
+  discountCode?: string, 
+  metadata?: { note?: string, attributes?: { key: string, value: string }[] },
+  buyerIdentity?: { email?: string, phone?: string }
+) => {
+  const query = `
+    mutation cartCreate($input: CartInput) {
+      cartCreate(input: $input) {
+        cart {
+          id
+          checkoutUrl
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  `;
+
+  const variables = {
+    input: {
+      lines: lineItems.map(item => ({
+        merchandiseId: item.variantId,
+        quantity: item.quantity
+      })),
+      ...(discountCode ? { discountCodes: [discountCode] } : {}),
+      note: metadata?.note || "Order from Headless Storefront",
+      attributes: metadata?.attributes || [],
+      buyerIdentity: buyerIdentity ? {
+        email: buyerIdentity.email,
+        phone: buyerIdentity.phone
+      } : undefined
+    }
+  };
+
+  const data = await shopifyFetch(query, variables);
+  
+  if (data.cartCreate.userErrors && data.cartCreate.userErrors.length > 0) {
+    const userError = data.cartCreate.userErrors[0];
+    // Provide a more helpful message for the "Merchandise does not exist" error
+    if (userError.message.includes('does not exist')) {
+      throw new Error(`Shopify Error: The Product Variant ID (${lineItems[0].variantId}) is invalid. Please ensure you have replaced the placeholder IDs in src/constants.ts with real GIDs from your Shopify Admin.`);
+    }
+    throw new Error(`Shopify Cart Error: ${userError.message} (${userError.field})`);
+  }
+
+  return {
+    id: data.cartCreate.cart.id,
+    webUrl: data.cartCreate.cart.checkoutUrl
+  };
+};

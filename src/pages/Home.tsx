@@ -8,11 +8,19 @@ import { ProductSelection } from "../components/ProductSelection";
 import { Reviews } from "../components/Reviews";
 import { BlogSection } from "../components/BlogSection";
 import { Product } from "../types";
-import { PRODUCTS } from "../constants";
+import { useProducts } from "../context/ProductContext";
 
 export const HomePage = ({ onToggleWishlist, wishlist }: { onToggleWishlist: (p: Product) => void, wishlist: Product[] }) => {
   const navigate = useNavigate();
-  const [selectedProduct, setSelectedProduct] = useState<Product>(PRODUCTS[0]);
+  const { products } = useProducts();
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+
+  // Initialize selected product when products load
+  React.useEffect(() => {
+    if (products.length > 0 && !selectedProduct) {
+      setSelectedProduct(products[0]);
+    }
+  }, [products, selectedProduct]);
 
   const onProductClick = (product: Product) => {
     setSelectedProduct(product);

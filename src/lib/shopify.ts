@@ -67,9 +67,17 @@ export const createShopifyCheckout = async (
       ...(discountCode ? { discountCodes: [discountCode] } : {}),
       note: metadata?.note || "Order from Headless Storefront",
       attributes: metadata?.attributes || [],
-      buyerIdentity: buyerIdentity ? {
-        email: buyerIdentity.email,
-        phone: buyerIdentity.phone
+      buyerIdentity: (buyerIdentity?.email || (buyerIdentity?.phone && buyerIdentity.phone.trim() !== '')) ? {
+        email: buyerIdentity?.email?.trim() || undefined,
+        phone: buyerIdentity?.phone && buyerIdentity.phone.trim() !== '' 
+          ? (() => {
+              const p = buyerIdentity.phone.trim().replace(/\s+/g, '');
+              if (p.startsWith('+')) return p;
+              if (/^\d{10}$/.test(p)) return `+91${p}`;
+              if (/^91\d{10}$/.test(p)) return `+${p}`;
+              return p.startsWith('+') ? p : `+${p}`;
+            })()
+          : undefined
       } : undefined
     }
   };
@@ -89,4 +97,90 @@ export const createShopifyCheckout = async (
     id: data.cartCreate.cart.id,
     webUrl: data.cartCreate.cart.checkoutUrl
   };
+};
+
+export const getShopifyProducts = async () => {
+  const query = `
+    {
+      products(first: 50) {
+        edges {
+          node {
+            id
+            title
+            handle
+            description
+            productType
+            collections(first: 5) {
+              edges {
+                node {
+                  title
+                }
+              }
+            }
+            images(first: 5) {
+              edges {
+                node {
+                  url
+                }
+              }
+            }
+            variants(first: 5) {
+              edges {
+                node {
+                  id
+                  title
+                  price {
+                    amount
+                    currencyCode
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  `;
+
+  const data = await shopifyFetch(query);
+  return data.products.edges.map(({ node }: any) => {
+    const variant = node.variants.edges[0]?.node;
+    const images = node.images.edges.map((edge: any) => edge.node.url);
+    const mainImage = images[0] || "https://images.unsplash.com/photo-1616948055677-83a37803e7f4?auto=format&fit=crop&q=80&w=800";
+    const collections = node.collections.edges.map((edge: any) => edge.node.title.toLowerCase());
+    
+    // Categorize based on collections first, then fallback to productType
+    let category: "perfume" | "candle" | "aura" = "perfume";
+    const type = node.productType.toLowerCase();
+
+    const isCandle = collections.some((c: string) => c.includes('candle')) || type.includes('candle');
+    const isSacred = collections.some((c: string) => c.includes('aura') || c.includes('puja') || c.includes('sacred') || c.includes('ritual')) || 
+                    type.includes('aura') || type.includes('puja') || type.includes('ritual');
+    const isFragrance = collections.some((c: string) => c.includes('fragrance') || c.includes('perfume') || c.includes('niche')) || 
+                        type.includes('perfume') || type.includes('fragrance');
+
+    if (isCandle) {
+      category = "candle";
+    } else if (isSacred) {
+      category = "aura";
+    } else if (isFragrance) {
+      category = "perfume";
+    } else {
+      // Default fallback based on type if no collection match
+      if (type.includes('candle')) category = "candle";
+      else if (type.includes('aura') || type.includes('puja')) category = "aura";
+    }
+
+    return {
+      id: node.id,
+      shopifyVariantId: variant?.id,
+      name: node.title,
+      category,
+      price: variant ? parseFloat(variant.price.amount) : 0,
+      rating: 4.8, 
+      image: mainImage,
+      images: images.length > 0 ? images : [mainImage],
+      description: node.description
+    };
+  });
 };

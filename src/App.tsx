@@ -18,6 +18,7 @@ import { BlogPage } from "./pages/BlogPage";
 import { CartProvider, useCart } from "./context/CartContext";
 import { AuthProvider } from "./context/AuthContext";
 import { SearchProvider } from "./context/SearchContext";
+import { ProductProvider } from "./context/ProductContext";
 import { Product } from "./types";
 
 const AppContent = () => {
@@ -73,12 +74,14 @@ export default function App() {
   return (
     <AuthProvider>
       <CartProvider>
-        <SearchProvider>
-          <BrowserRouter>
-            <ScrollToTop />
-            <AppContent />
-          </BrowserRouter>
-        </SearchProvider>
+        <ProductProvider>
+          <SearchProvider>
+            <BrowserRouter>
+              <ScrollToTop />
+              <AppContent />
+            </BrowserRouter>
+          </SearchProvider>
+        </ProductProvider>
       </CartProvider>
     </AuthProvider>
   );

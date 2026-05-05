@@ -1,11 +1,11 @@
 import React, { useMemo, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { PRODUCTS } from '../constants';
 import { Product } from '../types';
 import { Star, Heart, ArrowLeft, SlidersHorizontal, ShoppingCart, ShoppingBag, Minus, Plus } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useSearch } from '../context/SearchContext';
+import { useProducts } from '../context/ProductContext';
 
 const ProductItem = ({ product, onToggleWishlist, isWishlisted }: { product: Product, onToggleWishlist: (p: Product) => void, isWishlisted: boolean, key?: React.Key }) => {
   const navigate = useNavigate();
@@ -41,7 +41,7 @@ const ProductItem = ({ product, onToggleWishlist, isWishlisted }: { product: Pro
           <Heart className={`w-4 h-4 ${isWishlisted ? "fill-white" : ""}`} />
         </button>
         
-        <Link to={`/product/${product.id}`} className="block w-full h-full relative">
+        <Link to={`/product/${encodeURIComponent(product.id)}`} className="block w-full h-full relative">
           <img 
             src={product.image} 
             alt={product.name} 
@@ -69,7 +69,7 @@ const ProductItem = ({ product, onToggleWishlist, isWishlisted }: { product: Pro
       
       <div className="text-center px-4">
         <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-rose-500 mb-2">{product.category}</p>
-        <h3 className="text-xl font-display font-semibold mb-2 cursor-pointer hover:text-rose-500 transition-colors" onClick={() => navigate(`/product/${product.id}`)}>{product.name}</h3>
+        <h3 className="text-xl font-display font-semibold mb-2 cursor-pointer hover:text-rose-500 transition-colors" onClick={() => navigate(`/product/${encodeURIComponent(product.id)}`)}>{product.name}</h3>
         <div className="flex items-center justify-center gap-1 mb-4">
           {[...Array(5)].map((_, i) => (
             <Star key={i} className={`w-3 h-3 ${i < 4 ? "fill-orange-400 text-orange-400" : "text-gray-200 fill-gray-200"}`} />
@@ -111,6 +111,7 @@ const ProductItem = ({ product, onToggleWishlist, isWishlisted }: { product: Pro
 export const CategoryPage = ({ onToggleWishlist, wishlist }: { onToggleWishlist: (p: Product) => void, wishlist: Product[] }) => {
   const { categoryId } = useParams<{ categoryId: string }>();
   const { searchQuery } = useSearch();
+  const { products } = useProducts();
   const navigate = useNavigate();
 
   const categoryInfo = useMemo(() => {
@@ -145,8 +146,8 @@ export const CategoryPage = ({ onToggleWishlist, wishlist }: { onToggleWishlist:
 
   const filteredProducts = useMemo(() => {
     let base = categoryId && categoryId !== 'all' 
-      ? PRODUCTS.filter(p => p.category === categoryId)
-      : PRODUCTS;
+      ? products.filter(p => p.category === categoryId)
+      : products;
 
     if (searchQuery.trim() !== "") {
       return base.filter(p => 
@@ -155,7 +156,7 @@ export const CategoryPage = ({ onToggleWishlist, wishlist }: { onToggleWishlist:
       );
     }
     return base;
-  }, [categoryId, searchQuery]);
+  }, [categoryId, searchQuery, products]);
 
   return (
     <div className="min-h-screen bg-[#FDF8EE]">

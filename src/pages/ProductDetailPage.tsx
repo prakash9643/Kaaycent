@@ -2,24 +2,27 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { Heart, Star, ShoppingBag, ArrowLeft, Shield, Truck, RefreshCcw, Minus, Plus, MapPin, CheckCircle2, AlertCircle } from 'lucide-react';
-import { PRODUCTS } from '../constants';
 import { Product } from '../types';
 import { useCart } from '../context/CartContext';
+import { useProducts } from '../context/ProductContext';
 
 export const ProductDetailPage = ({ onToggleWishlist, wishlist }: { onToggleWishlist: (p: Product) => void, wishlist: Product[] }) => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { addItem } = useCart();
+  const { products, loading: productsLoading } = useProducts();
   const [product, setProduct] = useState<Product | null>(null);
   const [selectedSize, setSelectedSize] = useState('Standard');
   const [activeImg, setActiveImg] = useState(0);
 
   useEffect(() => {
-    const found = PRODUCTS.find(p => p.id === id);
+    if (!id) return;
+    const decodedId = decodeURIComponent(id);
+    const found = products.find(p => p.id === decodedId);
     if (found) {
       setProduct(found);
     }
-  }, [id]);
+  }, [id, products]);
 
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
@@ -41,12 +44,25 @@ export const ProductDetailPage = ({ onToggleWishlist, wishlist }: { onToggleWish
     setQuantity(prev => Math.max(1, prev + amount));
   };
 
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [id]);
+
+  if (productsLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#F2EDE1]">
+        <div className="w-12 h-12 border-4 border-rose-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
   if (!product) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#F2EDE1]">
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center">
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center px-6">
           <h2 className="text-4xl font-display mb-4">Product Not Found</h2>
-          <button onClick={() => navigate('/')} className="text-rose-500 font-bold uppercase tracking-widest text-xs">Back to Gallery</button>
+          <p className="text-gray-500 mb-8 max-w-sm mx-auto">We couldn't find the product you're looking for or it's currently unavailable.</p>
+          <button onClick={() => navigate('/')} className="px-8 py-3 bg-brand-dark text-white rounded-full font-bold uppercase tracking-widest text-[10px] hover:bg-rose-500 transition-all shadow-xl">Back to Gallery</button>
         </motion.div>
       </div>
     );
@@ -61,11 +77,9 @@ export const ProductDetailPage = ({ onToggleWishlist, wishlist }: { onToggleWish
     setTimeout(() => setAdded(false), 2000);
   };
 
-  const images = [
-    product.image,
-    `https://images.unsplash.com/photo-1620733723572-12c03f977bd0?auto=format&fit=crop&q=80&w=800`,
-    `https://images.unsplash.com/photo-1605651202774-98e3fd8fc7aa?auto=format&fit=crop&q=80&w=800`
-  ];
+  const images = product.images && product.images.length > 0 
+    ? product.images 
+    : [product.image];
 
   return (
     <div className="min-h-screen bg-[#F2EDE1] pt-32 pb-24">

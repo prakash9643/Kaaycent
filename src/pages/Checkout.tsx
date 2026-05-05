@@ -449,10 +449,10 @@ export const CheckoutPage = () => {
                       <Smartphone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300" />
                       <input 
                         type="text"
-                        maxLength={10}
-                        placeholder="9876543210"
+                        maxLength={15}
+                        placeholder="+91 98765 43210"
                         value={shippingDetails.phone}
-                        onChange={(e) => setShippingDetails({...shippingDetails, phone: e.target.value.replace(/\D/g, '')})}
+                        onChange={(e) => setShippingDetails({...shippingDetails, phone: e.target.value.replace(/[^\d+]/g, '')})}
                         className="w-full bg-[#f8f6f2] border-none rounded-2xl py-4 pl-12 pr-4 focus:ring-1 focus:ring-rose-500 transition-all"
                       />
                     </div>

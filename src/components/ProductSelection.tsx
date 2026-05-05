@@ -6,6 +6,7 @@ import { PRODUCTS } from "../constants";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import { useSearch } from "../context/SearchContext";
+import { useProducts } from "../context/ProductContext";
 
 interface ProductSelectionProps {
   onProductClick: (p: Product) => void;
@@ -57,7 +58,7 @@ const ProductCard = ({
       transition={{ duration: 0.3, ease: "easeOut" }}
       className="bg-white rounded-[30px] md:rounded-[40px] p-4 md:p-6 shadow-sm border border-gray-100 group relative flex flex-col h-full"
     >
-      <div className="relative aspect-square rounded-2xl md:rounded-3xl overflow-hidden mb-4 md:mb-6 cursor-pointer" onClick={() => navigate(`/product/${product.id}`)}>
+      <div className="relative aspect-square rounded-2xl md:rounded-3xl overflow-hidden mb-4 md:mb-6 cursor-pointer" onClick={() => navigate(`/product/${encodeURIComponent(product.id)}`)}>
         <button 
           onClick={(e) => {
             e.stopPropagation();
@@ -125,7 +126,7 @@ const ProductCard = ({
 
           <div className="flex flex-col sm:grid sm:grid-cols-2 gap-2 md:gap-3">
           <button 
-            onClick={() => navigate(`/product/${product.id}`)}
+            onClick={() => navigate(`/product/${encodeURIComponent(product.id)}`)}
             className="py-2.5 md:py-3 rounded-xl md:rounded-2xl border border-gray-200 text-[9px] md:text-[10px] font-bold tracking-widest uppercase hover:border-black transition-all"
           >
             Details
@@ -148,6 +149,7 @@ const ProductCard = ({
 
 export const ProductSelection = ({ onProductClick, onToggleWishlist, wishlist }: ProductSelectionProps) => {
   const navigate = useNavigate();
+  const { products } = useProducts();
   const { searchQuery, setSearchQuery } = useSearch();
   const [activeCategory, setActiveCategory] = useState<"all" | "perfume" | "candle" | "aura">("all");
   const [isMobile, setIsMobile] = useState(false);
@@ -159,7 +161,7 @@ export const ProductSelection = ({ onProductClick, onToggleWishlist, wishlist }:
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  const filteredByCategory = activeCategory === "all" ? PRODUCTS : PRODUCTS.filter(p => p.category === activeCategory);
+  const filteredByCategory = activeCategory === "all" ? products : products.filter(p => p.category === activeCategory);
   
   const filteredFinal = searchQuery.trim() === "" 
     ? filteredByCategory 

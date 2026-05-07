@@ -10,7 +10,7 @@ export const ProductDetailPage = ({ onToggleWishlist, wishlist }: { onToggleWish
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { addItem } = useCart();
-  const { products, loading: productsLoading } = useProducts();
+  const { products, error, loading: productsLoading } = useProducts();
   const [product, setProduct] = useState<Product | null>(null);
   const [selectedSize, setSelectedSize] = useState('Standard');
   const [activeImg, setActiveImg] = useState(0);
@@ -56,34 +56,35 @@ export const ProductDetailPage = ({ onToggleWishlist, wishlist }: { onToggleWish
     );
   }
 
-  if (!product) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#F2EDE1]">
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center px-6">
-          <h2 className="text-4xl font-display mb-4">Product Not Found</h2>
-          <p className="text-gray-500 mb-8 max-w-sm mx-auto">We couldn't find the product you're looking for or it's currently unavailable.</p>
-          <button onClick={() => navigate('/')} className="px-8 py-3 bg-brand-dark text-white rounded-full font-bold uppercase tracking-widest text-[10px] hover:bg-rose-500 transition-all shadow-xl">Back to Gallery</button>
-        </motion.div>
-      </div>
-    );
-  }
-
-  const isWishlisted = wishlist.some(p => p.id === product.id);
-
-  const handleAddToCart = () => {
-    addItem(product, quantity);
-    setQuantity(1);
-    setAdded(true);
-    setTimeout(() => setAdded(false), 2000);
-  };
-
-  const images = product.images && product.images.length > 0 
-    ? product.images 
-    : [product.image];
-
   return (
     <div className="min-h-screen bg-[#F2EDE1] pt-32 pb-24">
       <div className="container mx-auto px-6">
+        {error && (
+          <motion.div 
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-12 p-6 bg-rose-50 border border-rose-200 rounded-3xl flex flex-col md:flex-row items-center justify-between gap-4"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 bg-rose-500 rounded-full flex items-center justify-center text-white shrink-0">
+                <AlertCircle className="w-5 h-5" />
+              </div>
+              <div className="text-left">
+                <h3 className="font-display font-semibold text-rose-900 text-sm">Shopify Configuration Issue</h3>
+                <p className="text-[10px] text-rose-700/80 leading-tight">{error}</p>
+              </div>
+            </div>
+            <a 
+              href="https://vercel.com" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="px-6 py-2 bg-rose-500 text-white rounded-full text-[9px] font-bold uppercase tracking-widest hover:bg-rose-600 transition-colors whitespace-nowrap"
+            >
+              Verify Env Variables
+            </a>
+          </motion.div>
+        )}
+
         <button 
           onClick={() => navigate(-1)}
           className="flex items-center gap-2 text-gray-400 hover:text-black transition-colors mb-12 group"
@@ -92,252 +93,271 @@ export const ProductDetailPage = ({ onToggleWishlist, wishlist }: { onToggleWish
           <span className="text-xs font-bold uppercase tracking-[0.2em]">Back</span>
         </button>
 
-        <div className="flex flex-col lg:flex-row gap-8 lg:gap-24">
-          {/* Left: Images */}
-          <div className="lg:w-1/2 space-y-4 md:space-y-6">
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="aspect-square rounded-[2rem] md:rounded-[3rem] overflow-hidden bg-white shadow-2xl relative"
-            >
-              <AnimatePresence mode="wait">
-                <motion.img 
-                  key={activeImg}
-                  src={images[activeImg]} 
-                  initial={{ opacity: 0, scale: 1.1 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.5 }}
-                  fetchPriority="high"
-                  referrerPolicy="no-referrer"
-                  className="w-full h-full object-cover"
-                />
-              </AnimatePresence>
-              
-              <AnimatePresence>
-                {added && (
-                  <motion.div 
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="absolute inset-0 bg-brand-dark/40 backdrop-blur-sm flex flex-col items-center justify-center text-white z-20"
-                  >
-                    <motion.div
-                      initial={{ scale: 0.5, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      className="bg-white p-6 rounded-full shadow-2xl"
-                    >
-                      <ShoppingBag className="w-8 h-8 text-rose-500" />
-                    </motion.div>
-                    <motion.span 
-                      initial={{ y: 10, opacity: 0 }}
-                      animate={{ y: 0, opacity: 1 }}
-                      className="mt-4 font-display font-medium uppercase tracking-[0.3em] text-sm"
-                    >
-                      Added To Casket
-                    </motion.span>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              <button 
-                onClick={() => onToggleWishlist(product)}
-                className="absolute top-8 right-8 p-4 bg-white/20 backdrop-blur-xl rounded-full text-white hover:bg-rose-500 transition-all border border-white/30 z-30"
-              >
-                <Heart className={`w-6 h-6 ${isWishlisted ? "fill-white" : ""}`} />
-              </button>
-            </motion.div>
-            
-            <div className="flex gap-4">
-              {images.map((img, i) => (
-                <button 
-                  key={i}
-                  onClick={() => setActiveImg(i)}
-                  className={`w-24 aspect-square rounded-2xl overflow-hidden border-2 transition-all ${activeImg === i ? "border-rose-500 shadow-lg scale-105" : "border-transparent opacity-60 hover:opacity-100"}`}
+        {(!product) ? (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-20 px-6">
+            <h2 className="text-4xl font-display mb-4">Product Not Found</h2>
+            <p className="text-gray-500 mb-8 max-w-sm mx-auto">We couldn't find the product you're looking for or it's currently unavailable.</p>
+            <button onClick={() => navigate('/')} className="px-8 py-3 bg-brand-dark text-white rounded-full font-bold uppercase tracking-widest text-[10px] hover:bg-rose-500 transition-all shadow-xl">Back to Gallery</button>
+          </motion.div>
+        ) : (() => {
+          const isWishlisted = wishlist.some(p => p.id === product.id);
+          const handleAddToCart = () => {
+            addItem(product, quantity);
+            setQuantity(1);
+            setAdded(true);
+            setTimeout(() => setAdded(false), 2000);
+          };
+          const images = product.images && product.images.length > 0 ? product.images : [product.image];
+          
+          return (
+            <div className="flex flex-col lg:flex-row gap-8 lg:gap-24">
+              {/* Left: Images */}
+              <div className="lg:w-1/2 space-y-4 md:space-y-6">
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="aspect-square rounded-[2rem] md:rounded-[3rem] overflow-hidden bg-white shadow-2xl relative"
                 >
-                  <img 
-                    src={img} 
-                    loading="lazy"
-                    referrerPolicy="no-referrer"
-                    className="w-full h-full object-cover" 
-                  />
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Right: Info */}
-          <div className="lg:w-1/2">
-            <motion.div
-              initial={{ opacity: 0, x: 50 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="space-y-8"
-            >
-              <div className="space-y-4">
-                <div className="flex items-center gap-2">
-                  <span className="px-3 py-1 bg-brand-dark text-white text-[10px] font-bold uppercase tracking-widest rounded-full">New Arrival</span>
-                  <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Handmade In India</span>
-                </div>
-                <h1 className="text-4xl sm:text-6xl md:text-8xl font-display font-medium tracking-tighter leading-[1.1] md:leading-none">
-                  {product.name}
-                </h1>
-                <div className="flex flex-wrap items-center gap-4 py-2">
-                  <div className="flex items-center gap-1">
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} className={`w-3.5 h-3.5 md:w-4 h-4 ${i < Math.floor(product.rating) ? "fill-orange-400 text-orange-400" : "text-gray-300"}`} />
-                    ))}
-                  </div>
-                  <span className="text-xs md:text-sm text-gray-400 font-medium">({product.rating} / 5.0) Review • 2.4k Orders</span>
-                </div>
-              </div>
-
-              <div className="text-4xl md:text-5xl font-display font-light text-rose-500">
-                ₹{product.price.toLocaleString('en-IN')}
-              </div>
-
-              <p className="text-gray-500 text-base md:text-lg font-light leading-relaxed max-w-lg">
-                Our signature formulation, {product.name} is a masterclass in olfactory balance. 
-                {product.description} Crafted with precision and passion, this {product.category} 
-                embodies the spirit of Kaycent’s artisanal heritage.
-              </p>
-
-              <div className="space-y-6 pt-6">
-                <div>
-                  <h4 className="text-xs font-bold uppercase tracking-widest mb-4">Selection</h4>
-                  <div className="flex flex-wrap gap-3">
-                    {['Standard', 'Premium Collection', 'Gift Box'].map((size) => (
-                      <button 
-                        key={size}
-                        onClick={() => setSelectedSize(size)}
-                        className={`px-5 md:px-6 py-2.5 md:py-3 rounded-full text-[9px] md:text-[10px] font-bold tracking-widest uppercase transition-all ${selectedSize === size ? "bg-brand-dark text-white" : "border border-gray-200 text-gray-400 hover:border-gray-800 hover:text-gray-800"}`}
-                      >
-                        {size}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="pt-4">
-                  <h4 className="text-xs font-bold uppercase tracking-widest mb-4">Quantity</h4>
-                  <div className="flex items-center bg-white border border-gray-200 rounded-full p-1 max-w-[180px] justify-between">
-                    <button 
-                      onClick={() => adjustQuantity(-1)}
-                      className="p-3 hover:bg-gray-50 rounded-full transition-colors text-brand-dark disabled:opacity-30"
-                      disabled={quantity <= 1}
-                    >
-                      <Minus className="w-5 h-5" />
-                    </button>
-                    <span className="text-lg font-display font-medium w-8 text-center">{quantity}</span>
-                    <button 
-                      onClick={() => adjustQuantity(1)}
-                      className="p-3 hover:bg-gray-50 rounded-full transition-colors text-brand-dark"
-                    >
-                      <Plus className="w-5 h-5" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex flex-col sm:flex-row gap-4 pt-8">
-                <button 
-                  onClick={handleAddToCart}
-                  disabled={added}
-                  className={`flex-1 py-5 rounded-full font-bold tracking-[0.2em] uppercase transition-all shadow-2xl flex items-center justify-center gap-3 group ${
-                    added ? "bg-rose-500 text-white" : "bg-brand-dark text-white hover:bg-rose-500"
-                  }`}
-                >
-                  <ShoppingBag className={`w-5 h-5 transition-transform ${added ? "scale-110" : "group-hover:scale-110"}`} />
-                  {added ? "Added To Casket" : "Add To Casket"}
-                </button>
-                <button 
-                  onClick={() => {
-                    handleAddToCart();
-                    navigate('/checkout');
-                  }}
-                  className="px-10 py-5 border-2 border-brand-dark rounded-full font-bold tracking-[0.2em] uppercase hover:bg-brand-dark hover:text-white transition-all"
-                >
-                  Buy Now
-                </button>
-              </div>
-
-              {/* Pincode Checker */}
-              <div className="pt-8 border-t border-gray-100">
-                <h4 className="text-[10px] font-bold uppercase tracking-widest mb-4 flex items-center gap-2">
-                  <MapPin className="w-3 h-3 text-rose-500" />
-                  Delivery Check
-                </h4>
-                <form onSubmit={checkPincode} className="flex gap-2">
-                  <div className="relative flex-1">
-                    <input 
-                      type="text" 
-                      maxLength={6}
-                      placeholder="Enter Pincode (e.g. 400001)"
-                      value={pincode}
-                      onChange={(e) => {
-                        const val = e.target.value.replace(/\D/g, '');
-                        setPincode(val);
-                        if (pincodeStatus !== 'idle') setPincodeStatus('idle');
-                      }}
-                      className="w-full bg-white border border-gray-200 rounded-xl px-5 py-3 text-sm focus:outline-none focus:border-brand-dark transition-colors"
+                  <AnimatePresence mode="wait">
+                    <motion.img 
+                      key={activeImg}
+                      src={images[activeImg]} 
+                      initial={{ opacity: 0, scale: 1.1 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.5 }}
+                      fetchPriority="high"
+                      referrerPolicy="no-referrer"
+                      className="w-full h-full object-cover"
                     />
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                      {pincodeStatus === 'checking' && (
-                        <div className="w-4 h-4 border-2 border-rose-500 border-t-transparent rounded-full animate-spin" />
-                      )}
+                  </AnimatePresence>
+                  
+                  <AnimatePresence>
+                    {added && (
+                      <motion.div 
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="absolute inset-0 bg-brand-dark/40 backdrop-blur-sm flex flex-col items-center justify-center text-white z-20"
+                      >
+                        <motion.div
+                          initial={{ scale: 0.5, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          className="bg-white p-6 rounded-full shadow-2xl"
+                        >
+                          <ShoppingBag className="w-8 h-8 text-rose-500" />
+                        </motion.div>
+                        <motion.span 
+                          initial={{ y: 10, opacity: 0 }}
+                          animate={{ y: 0, opacity: 1 }}
+                          className="mt-4 font-display font-medium uppercase tracking-[0.3em] text-sm"
+                        >
+                          Added To Casket
+                        </motion.span>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  <button 
+                    onClick={() => onToggleWishlist(product)}
+                    className="absolute top-8 right-8 p-4 bg-white/20 backdrop-blur-xl rounded-full text-white hover:bg-rose-500 transition-all border border-white/30 z-30"
+                  >
+                    <Heart className={`w-6 h-6 ${isWishlisted ? "fill-white" : ""}`} />
+                  </button>
+                </motion.div>
+                
+                <div className="flex gap-4">
+                  {images.map((img, i) => (
+                    <button 
+                      key={i}
+                      onClick={() => setActiveImg(i)}
+                      className={`w-24 aspect-square rounded-2xl overflow-hidden border-2 transition-all ${activeImg === i ? "border-rose-500 shadow-lg scale-105" : "border-transparent opacity-60 hover:opacity-100"}`}
+                    >
+                      <img 
+                        src={img} 
+                        loading="lazy"
+                        referrerPolicy="no-referrer"
+                        className="w-full h-full object-cover" 
+                      />
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Right: Info */}
+              <div className="lg:w-1/2">
+                <motion.div
+                  initial={{ opacity: 0, x: 50 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="space-y-8"
+                >
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2">
+                      <span className="px-3 py-1 bg-brand-dark text-white text-[10px] font-bold uppercase tracking-widest rounded-full">New Arrival</span>
+                      <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Handmade In India</span>
+                    </div>
+                    <h1 className="text-4xl sm:text-6xl md:text-8xl font-display font-medium tracking-tighter leading-[1.1] md:leading-none">
+                      {product.name}
+                    </h1>
+                    <div className="flex flex-wrap items-center gap-4 py-2">
+                      <div className="flex items-center gap-1">
+                        {[...Array(5)].map((_, i) => (
+                          <Star key={i} className={`w-3.5 h-3.5 md:w-4 h-4 ${i < Math.floor(product.rating) ? "fill-orange-400 text-orange-400" : "text-gray-300"}`} />
+                        ))}
+                      </div>
+                      <span className="text-xs md:text-sm text-gray-400 font-medium">({product.rating} / 5.0) Review • 2.4k Orders</span>
                     </div>
                   </div>
-                  <button 
-                    type="submit"
-                    disabled={pincode.length !== 6 || pincodeStatus === 'checking'}
-                    className="bg-brand-dark text-white px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-rose-500 transition-colors disabled:opacity-50 disabled:hover:bg-brand-dark"
-                  >
-                    Check
-                  </button>
-                </form>
-                
-                <AnimatePresence mode="wait">
-                  {pincodeStatus === 'available' && (
-                    <motion.p 
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0 }}
-                      className="mt-3 text-[10px] font-bold text-green-600 flex items-center gap-1.5 uppercase tracking-wider"
-                    >
-                      <CheckCircle2 className="w-3 h-3" />
-                      Delivery available at this pin code — Estimated 4-6 days
-                    </motion.p>
-                  )}
-                  {pincodeStatus === 'unavailable' && (
-                    <motion.p 
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0 }}
-                      className="mt-3 text-[10px] font-bold text-rose-500 flex items-center gap-1.5 uppercase tracking-wider"
-                    >
-                      <AlertCircle className="w-3 h-3" />
-                      Currently unavailable at {pincode}
-                    </motion.p>
-                  )}
-                </AnimatePresence>
-              </div>
 
-              <div className="grid grid-cols-3 gap-4 md:gap-8 pt-12 border-t border-gray-200">
-                <div className="text-center space-y-1 md:space-y-2">
-                  <Shield className="w-5 h-5 md:w-6 h-6 mx-auto text-rose-500 opacity-60" />
-                  <p className="text-[8px] md:text-[10px] font-bold uppercase tracking-widest text-gray-400">Pure Quality</p>
-                </div>
-                <div className="text-center space-y-1 md:space-y-2">
-                  <Truck className="w-5 h-5 md:w-6 h-6 mx-auto text-rose-500 opacity-60" />
-                  <p className="text-[8px] md:text-[10px] font-bold uppercase tracking-widest text-gray-400">Pan India Delivery</p>
-                </div>
-                <div className="text-center space-y-1 md:space-y-2">
-                  <RefreshCcw className="w-5 h-5 md:w-6 h-6 mx-auto text-rose-500 opacity-60" />
-                  <p className="text-[8px] md:text-[10px] font-bold uppercase tracking-widest text-gray-400">Easy Returns</p>
-                </div>
+                  <div className="text-4xl md:text-5xl font-display font-light text-rose-500">
+                    ₹{product.price.toLocaleString('en-IN')}
+                  </div>
+
+                  <p className="text-gray-500 text-base md:text-lg font-light leading-relaxed max-w-lg">
+                    Our signature formulation, {product.name} is a masterclass in olfactory balance. 
+                    {product.description} Crafted with precision and passion, this {product.category} 
+                    embodies the spirit of Kaycent’s artisanal heritage.
+                  </p>
+
+                  <div className="space-y-6 pt-6">
+                    <div>
+                      <h4 className="text-xs font-bold uppercase tracking-widest mb-4">Selection</h4>
+                      <div className="flex flex-wrap gap-3">
+                        {['Standard', 'Premium Collection', 'Gift Box'].map((size) => (
+                          <button 
+                            key={size}
+                            onClick={() => setSelectedSize(size)}
+                            className={`px-5 md:px-6 py-2.5 md:py-3 rounded-full text-[9px] md:text-[10px] font-bold tracking-widest uppercase transition-all ${selectedSize === size ? "bg-brand-dark text-white" : "border border-gray-200 text-gray-400 hover:border-gray-800 hover:text-gray-800"}`}
+                          >
+                            {size}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="pt-4">
+                      <h4 className="text-xs font-bold uppercase tracking-widest mb-4">Quantity</h4>
+                      <div className="flex items-center bg-white border border-gray-200 rounded-full p-1 max-w-[180px] justify-between">
+                        <button 
+                          onClick={() => adjustQuantity(-1)}
+                          className="p-3 hover:bg-gray-50 rounded-full transition-colors text-brand-dark disabled:opacity-30"
+                          disabled={quantity <= 1}
+                        >
+                          <Minus className="w-5 h-5" />
+                        </button>
+                        <span className="text-lg font-display font-medium w-8 text-center">{quantity}</span>
+                        <button 
+                          onClick={() => adjustQuantity(1)}
+                          className="p-3 hover:bg-gray-50 rounded-full transition-colors text-brand-dark"
+                        >
+                          <Plus className="w-5 h-5" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row gap-4 pt-8">
+                    <button 
+                      onClick={handleAddToCart}
+                      disabled={added}
+                      className={`flex-1 py-5 rounded-full font-bold tracking-[0.2em] uppercase transition-all shadow-2xl flex items-center justify-center gap-3 group ${
+                        added ? "bg-rose-500 text-white" : "bg-brand-dark text-white hover:bg-rose-500"
+                      }`}
+                    >
+                      <ShoppingBag className={`w-5 h-5 transition-transform ${added ? "scale-110" : "group-hover:scale-110"}`} />
+                      {added ? "Added To Casket" : "Add To Casket"}
+                    </button>
+                    <button 
+                      onClick={() => {
+                        handleAddToCart();
+                        navigate('/checkout');
+                      }}
+                      className="px-10 py-5 border-2 border-brand-dark rounded-full font-bold tracking-[0.2em] uppercase hover:bg-brand-dark hover:text-white transition-all"
+                    >
+                      Buy Now
+                    </button>
+                  </div>
+
+                  {/* Pincode Checker */}
+                  <div className="pt-8 border-t border-gray-100">
+                    <h4 className="text-[10px] font-bold uppercase tracking-widest mb-4 flex items-center gap-2">
+                      <MapPin className="w-3 h-3 text-rose-500" />
+                      Delivery Check
+                    </h4>
+                    <form onSubmit={checkPincode} className="flex gap-2">
+                      <div className="relative flex-1">
+                        <input 
+                          type="text" 
+                          maxLength={6}
+                          placeholder="Enter Pincode (e.g. 400001)"
+                          value={pincode}
+                          onChange={(e) => {
+                            const val = e.target.value.replace(/\D/g, '');
+                            setPincode(val);
+                            if (pincodeStatus !== 'idle') setPincodeStatus('idle');
+                          }}
+                          className="w-full bg-white border border-gray-200 rounded-xl px-5 py-3 text-sm focus:outline-none focus:border-brand-dark transition-colors"
+                        />
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                          {pincodeStatus === 'checking' && (
+                            <div className="w-4 h-4 border-2 border-rose-500 border-t-transparent rounded-full animate-spin" />
+                          )}
+                        </div>
+                      </div>
+                      <button 
+                        type="submit"
+                        disabled={pincode.length !== 6 || pincodeStatus === 'checking'}
+                        className="bg-brand-dark text-white px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-rose-500 transition-colors disabled:opacity-50 disabled:hover:bg-brand-dark"
+                      >
+                        Check
+                      </button>
+                    </form>
+                    
+                    <AnimatePresence mode="wait">
+                      {pincodeStatus === 'available' && (
+                        <motion.p 
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0 }}
+                          className="mt-3 text-[10px] font-bold text-green-600 flex items-center gap-1.5 uppercase tracking-wider"
+                        >
+                          <CheckCircle2 className="w-3 h-3" />
+                          Delivery available at this pin code — Estimated 4-6 days
+                        </motion.p>
+                      )}
+                      {pincodeStatus === 'unavailable' && (
+                        <motion.p 
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0 }}
+                          className="mt-3 text-[10px] font-bold text-rose-500 flex items-center gap-1.5 uppercase tracking-wider"
+                        >
+                          <AlertCircle className="w-3 h-3" />
+                          Currently unavailable at {pincode}
+                        </motion.p>
+                      )}
+                    </AnimatePresence>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-4 md:gap-8 pt-12 border-t border-gray-200">
+                    <div className="text-center space-y-1 md:space-y-2">
+                      <Shield className="w-5 h-5 md:w-6 h-6 mx-auto text-rose-500 opacity-60" />
+                      <p className="text-[8px] md:text-[10px] font-bold uppercase tracking-widest text-gray-400">Pure Quality</p>
+                    </div>
+                    <div className="text-center space-y-1 md:space-y-2">
+                      <Truck className="w-5 h-5 md:w-6 h-6 mx-auto text-rose-500 opacity-60" />
+                      <p className="text-[8px] md:text-[10px] font-bold uppercase tracking-widest text-gray-400">Pan India Delivery</p>
+                    </div>
+                    <div className="text-center space-y-1 md:space-y-2">
+                      <RefreshCcw className="w-5 h-5 md:w-6 h-6 mx-auto text-rose-500 opacity-60" />
+                      <p className="text-[8px] md:text-[10px] font-bold uppercase tracking-widest text-gray-400">Easy Returns</p>
+                    </div>
+                  </div>
+                </motion.div>
               </div>
-            </motion.div>
-          </div>
-        </div>
+            </div>
+          );
+        })()}
 
         <section className="mt-16 md:mt-32 pt-16 md:pt-32 border-t border-gray-200">
            <div className="max-w-4xl mx-auto space-y-10 md:space-y-16">

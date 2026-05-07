@@ -3,7 +3,7 @@ const SHOPIFY_STORE_DOMAIN = import.meta.env.VITE_SHOPIFY_STORE_DOMAIN;
 const SHOPIFY_STOREFRONT_ACCESS_TOKEN = import.meta.env.VITE_SHOPIFY_STOREFRONT_ACCESS_TOKEN;
 
 async function shopifyFetch(query: string, variables = {}) {
-  const domain = SHOPIFY_STORE_DOMAIN?.trim();
+  const domain = SHOPIFY_STORE_DOMAIN?.trim().replace(/^https?:\/\//, '').replace(/\/$/, '');
   const token = SHOPIFY_STOREFRONT_ACCESS_TOKEN?.trim();
 
   if (!domain || !token || domain === '' || token === '') {
@@ -24,7 +24,9 @@ async function shopifyFetch(query: string, variables = {}) {
     console.error('Shopify API Error Details:', errorText);
     
     if (response.status === 401) {
-      throw new Error(`Shopify Unauthorized (401): Your Storefront Access Token is invalid or missing permissions. Please verify VITE_SHOPIFY_STOREFRONT_ACCESS_TOKEN and your Headless app scopes in Shopify Admin.`);
+      throw new Error(`Shopify Unauthorized (401): Your Storefront Access Token is invalid or missing permissions. 
+        IMPORTANT: Use the "Storefront Access Token" from the "Sales Channels > Headless" (or Storefront) section in Shopify Admin. 
+        Do NOT use the "Admin API Access Token" or "API Secret Key".`);
     }
     
     throw new Error(`Shopify API request failed with status ${response.status}: ${response.statusText}`);

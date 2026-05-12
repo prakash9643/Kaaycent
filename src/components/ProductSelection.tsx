@@ -103,46 +103,71 @@ const ProductCard = ({
           ₹{product.price.toLocaleString('en-IN')}
         </div>
 
-        <div className="flex flex-col gap-4 mt-auto pt-4 border-t border-gray-50">
-          <div className="flex items-center justify-between gap-4">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Qty</span>
-            <div className="flex items-center bg-[#F2EDE1] rounded-full p-1 flex-1 max-w-[120px] justify-between">
+        <div className="flex flex-col gap-3 mt-auto pt-6 border-t border-gray-50">
+          <div className="flex items-center justify-between gap-4 px-1">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Quantity</span>
+            <div className="flex items-center bg-[#F2EDE1] rounded-full p-1 w-28 justify-between">
               <button 
                 onClick={() => adjustQuantity(-1)}
-                className="p-1.5 md:p-2 hover:bg-white rounded-full transition-colors text-brand-dark disabled:opacity-30"
+                className="p-1.5 hover:bg-white rounded-full transition-colors text-brand-dark disabled:opacity-30"
                 disabled={quantity <= 1}
               >
-                <Minus className="w-3.5 h-3.5 md:w-3 md:h-3" />
+                <Minus className="w-3 h-3" />
               </button>
-              <span className="text-[10px] md:text-xs font-bold w-4 text-center">{quantity}</span>
+              <span className="text-[10px] font-bold w-4 text-center">{quantity}</span>
               <button 
                 onClick={() => adjustQuantity(1)}
-                className="p-1.5 md:p-2 hover:bg-white rounded-full transition-colors text-brand-dark"
+                className="p-1.5 hover:bg-white rounded-full transition-colors text-brand-dark"
               >
-                <Plus className="w-3.5 h-3.5 md:w-3 md:h-3" />
+                <Plus className="w-3 h-3" />
               </button>
             </div>
           </div>
 
-          <div className="flex flex-col sm:grid sm:grid-cols-2 gap-2 md:gap-3">
-          <button 
-            onClick={() => navigate(`/product/${encodeURIComponent(product.id)}`)}
-            className="py-2.5 md:py-3 rounded-xl md:rounded-2xl border border-gray-200 text-[9px] md:text-[10px] font-bold tracking-widest uppercase hover:border-black transition-all"
-          >
-            Details
-          </button>
-          <button 
-            onClick={handleAdd}
-            disabled={added}
-            className={`py-2.5 md:py-3 rounded-xl md:rounded-2xl text-[9px] md:text-[10px] font-bold tracking-widest uppercase transition-all flex items-center justify-center gap-2 ${
-              added ? "bg-emerald-600 text-white" : "bg-brand-dark text-white hover:bg-rose-500"
-            }`}
-          >
-            {added ? <Check className="w-3 h-3" /> : <ShoppingBag className="w-3 h-3" />}
-            {added ? "Added!" : "Add To Casket"}
-          </button>
+          <div className="flex gap-2 h-11">
+            <button 
+              onClick={() => navigate(`/product/${encodeURIComponent(product.id)}`)}
+              className="flex-1 rounded-full border border-gray-200 text-[9px] font-bold tracking-[0.2em] uppercase hover:bg-gray-50 hover:border-gray-400 transition-all duration-300"
+            >
+              Details
+            </button>
+            <button 
+              onClick={handleAdd}
+              disabled={added}
+              className={`flex-[1.5] rounded-full text-[9px] font-bold tracking-[0.2em] uppercase transition-all duration-500 flex items-center justify-center gap-2 group relative overflow-hidden ${
+                added 
+                ? "bg-rose-500 text-white" 
+                : "bg-brand-dark text-white hover:bg-rose-600 hover:shadow-xl hover:shadow-rose-100"
+              }`}
+            >
+              <AnimatePresence mode="wait">
+                {added ? (
+                  <motion.div
+                    key="added"
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    exit={{ y: -20, opacity: 0 }}
+                    className="flex items-center gap-2"
+                  >
+                    <Check className="w-3.5 h-3.5" />
+                    <span>Added</span>
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="add"
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    exit={{ y: -20, opacity: 0 }}
+                    className="flex items-center gap-2"
+                  >
+                    <ShoppingBag className="w-3.5 h-3.5 transition-transform group-hover:scale-110" />
+                    <span>Add to Casket</span>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </button>
+          </div>
         </div>
-      </div>
     </div>
   </motion.div>
   );

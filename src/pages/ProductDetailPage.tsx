@@ -260,21 +260,51 @@ export const ProductDetailPage = ({ onToggleWishlist, wishlist }: { onToggleWish
                     <button 
                       onClick={handleAddToCart}
                       disabled={added}
-                      className={`flex-1 py-5 rounded-full font-bold tracking-[0.2em] uppercase transition-all shadow-2xl flex items-center justify-center gap-3 group ${
-                        added ? "bg-rose-500 text-white" : "bg-brand-dark text-white hover:bg-rose-500"
+                      className={`flex-1 py-5 rounded-full font-bold tracking-[0.3em] uppercase transition-all duration-700 shadow-2xl flex items-center justify-center gap-4 group relative overflow-hidden ${
+                        added 
+                        ? "bg-rose-600 text-white shadow-rose-200" 
+                        : "bg-brand-dark text-white hover:bg-rose-600 hover:shadow-rose-100 active:scale-[0.98]"
                       }`}
                     >
-                      <ShoppingBag className={`w-5 h-5 transition-transform ${added ? "scale-110" : "group-hover:scale-110"}`} />
-                      {added ? "Added To Casket" : "Add To Casket"}
+                      <AnimatePresence mode="wait">
+                        {added ? (
+                          <motion.div
+                            key="added"
+                            initial={{ y: 30, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            exit={{ y: -30, opacity: 0 }}
+                            className="flex items-center gap-3"
+                          >
+                            <CheckCircle2 className="w-6 h-6" />
+                            <span className="text-xs">Added to collection</span>
+                          </motion.div>
+                        ) : (
+                          <motion.div
+                            key="add"
+                            initial={{ y: 30, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            exit={{ y: -30, opacity: 0 }}
+                            className="flex items-center gap-3"
+                          >
+                            <ShoppingBag className="w-5 h-5 transition-transform group-hover:scale-110 group-hover:rotate-12" />
+                            <span className="text-xs">Add to Casket</span>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                      
+                      {/* Subtle shine effect */}
+                      {!added && (
+                        <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:animate-shine" />
+                      )}
                     </button>
                     <button 
                       onClick={() => {
                         handleAddToCart();
                         navigate('/checkout');
                       }}
-                      className="px-10 py-5 border-2 border-brand-dark rounded-full font-bold tracking-[0.2em] uppercase hover:bg-brand-dark hover:text-white transition-all"
+                      className="px-12 py-5 border border-brand-dark rounded-full font-bold tracking-[0.3em] uppercase hover:bg-brand-dark hover:text-white transition-all duration-500 text-xs"
                     >
-                      Buy Now
+                      Instant Buy
                     </button>
                   </div>
 
@@ -359,37 +389,39 @@ export const ProductDetailPage = ({ onToggleWishlist, wishlist }: { onToggleWish
           );
         })()}
 
-        <section className="mt-16 md:mt-32 pt-16 md:pt-32 border-t border-gray-200">
-           <div className="max-w-4xl mx-auto space-y-10 md:space-y-16">
-              <div className="text-center">
-                <h2 className="text-3xl md:text-5xl font-display mb-6 md:mb-8">The Sensory Journey</h2>
-                <p className="text-base md:text-xl text-gray-500 font-light leading-relaxed">
-                  Every note in {product.name} has been selected to evoke a specific memory. 
-                  We believe that scent is the most direct path to the soul, 
-                  cutting through the noise of the everyday to deliver a moment of pure clarity.
-                </p>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
-                 <div className="bg-white p-8 md:p-12 rounded-[2rem] md:rounded-[3rem] shadow-xl space-y-6">
-                    <h3 className="text-xl md:text-2xl font-display">Olfactory Notes</h3>
-                    <ul className="space-y-4">
-                      <li className="flex justify-between border-b pb-2 text-xs md:text-sm"><span className="text-gray-400">Top</span> <span className="font-medium tracking-widest uppercase text-[10px] md:text-xs">Bergamot & Pink Pepper</span></li>
-                      <li className="flex justify-between border-b pb-2 text-xs md:text-sm"><span className="text-gray-400">Heart</span> <span className="font-medium tracking-widest uppercase text-[10px] md:text-xs">Damask Rose & Jasmine</span></li>
-                      <li className="flex justify-between border-b pb-2 text-xs md:text-sm"><span className="text-gray-400">Base</span> <span className="font-medium tracking-widest uppercase text-[10px] md:text-xs">Ambergris & Sandalwood</span></li>
-                    </ul>
-                 </div>
-                 <div className="bg-brand-dark p-8 md:p-12 rounded-[2rem] md:rounded-[3rem] shadow-xl text-white space-y-6">
-                    <h3 className="text-xl md:text-2xl font-display text-rose-500">The Ritual</h3>
-                    <p className="text-sm md:text-base text-white/60 font-light italic">
-                      "Apply to pulse points or light in a draft-free space. 
-                      Allow the first burn to reach the edges. 
-                      Breathe deep. Re-center."
-                    </p>
-                 </div>
-              </div>
-           </div>
-        </section>
+        {product && (
+          <section className="mt-16 md:mt-32 pt-16 md:pt-32 border-t border-gray-200">
+             <div className="max-w-4xl mx-auto space-y-10 md:space-y-16">
+                <div className="text-center">
+                  <h2 className="text-3xl md:text-5xl font-display mb-6 md:mb-8">The Sensory Journey</h2>
+                  <p className="text-base md:text-xl text-gray-500 font-light leading-relaxed">
+                    Every note in {product.name} has been selected to evoke a specific memory. 
+                    We believe that scent is the most direct path to the soul, 
+                    cutting through the noise of the everyday to deliver a moment of pure clarity.
+                  </p>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
+                   <div className="bg-white p-8 md:p-12 rounded-[2rem] md:rounded-[3rem] shadow-xl space-y-6">
+                      <h3 className="text-xl md:text-2xl font-display">Olfactory Notes</h3>
+                      <ul className="space-y-4">
+                        <li className="flex justify-between border-b pb-2 text-xs md:text-sm"><span className="text-gray-400">Top</span> <span className="font-medium tracking-widest uppercase text-[10px] md:text-xs">Bergamot & Pink Pepper</span></li>
+                        <li className="flex justify-between border-b pb-2 text-xs md:text-sm"><span className="text-gray-400">Heart</span> <span className="font-medium tracking-widest uppercase text-[10px] md:text-xs">Damask Rose & Jasmine</span></li>
+                        <li className="flex justify-between border-b pb-2 text-xs md:text-sm"><span className="text-gray-400">Base</span> <span className="font-medium tracking-widest uppercase text-[10px] md:text-xs">Ambergris & Sandalwood</span></li>
+                      </ul>
+                   </div>
+                   <div className="bg-brand-dark p-8 md:p-12 rounded-[2rem] md:rounded-[3rem] shadow-xl text-white space-y-6">
+                      <h3 className="text-xl md:text-2xl font-display text-rose-500">The Ritual</h3>
+                      <p className="text-sm md:text-base text-white/60 font-light italic">
+                        "Apply to pulse points or light in a draft-free space. 
+                        Allow the first burn to reach the edges. 
+                        Breathe deep. Re-center."
+                      </p>
+                   </div>
+                </div>
+             </div>
+          </section>
+        )}
       </div>
     </div>
   );

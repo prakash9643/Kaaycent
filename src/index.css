@@ -22,6 +22,12 @@ html {
   --color-brand-secondary: #D2B48C;
   --color-brand-dark: #111111;
   --color-off-white: #FDF8EE;
+
+  @keyframes shine {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+  --animate-shine: shine 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 
 body {
